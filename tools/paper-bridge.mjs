@@ -10,6 +10,11 @@
  *   node tools/paper-bridge.mjs add-project --name "Feed The Fire" --source "Cupang Ventures / X" --link "https://feedfirereh.com/" --status ACTIVE --detail-file ./detail.txt
  *   node tools/paper-bridge.mjs add-journal --date 2026-11-04 --type TRADE --pair "HYPE / USD" --action "LONG 20x" --size '$2,000' --range "Entry: $42.50" --pnl "+$100" --status CLOSED --notes "thesis"
  *   node tools/paper-bridge.mjs set-notes --text-file ./notes.txt
+ *   node tools/paper-bridge.mjs list-agents
+ *   node tools/paper-bridge.mjs run-agent --action audit.scan --project-id proj_1
+ *   node tools/paper-bridge.mjs run-agent --action dev.generate_plan --title "My App"
+ *   node tools/paper-bridge.mjs run-agent --action journal.record --project-id proj_1 --note-content "did X"
+ *   node tools/paper-bridge.mjs run-agent --action web3.mint --contract 0x... (honest stub until wallet adapter)
  *   node tools/paper-bridge.mjs export [--out paper-data.json]
  *   node tools/paper-bridge.mjs import --in ./backup.json
  *
@@ -102,6 +107,62 @@ const Ops = {
     const saved = await apiPost(state);
     return { added: true, saved };
   },
+  // --- Lazy agents (server-side, on-demand only) ---
+  // Mirrors the browser agents in src/agents/ but runs headless against the
+  // state file. Nothing loads until run_agent is called.
+  list_agents: async () => ({
+    mode: 'lazy',
+    agents: [
+      { id: 'agent.web3_journaler', name: 'Web3 & Strategy Journaler', actions: ['web3.mint', 'web3.swap', 'web3.lp_snapshot', 'journal.record'], loaded: false },
+      { id: 'agent.security_auditor', name: 'Security Auditor & Dev Planner', actions: ['audit.scan', 'dev.generate_plan'], loaded: false },
+    ],
+    note: 'Lazy: agents instantiate only when run_agent executes one of their actions. For always-on browser mode see PaperWorkspace.agents.setMode("always").',
+  }),
+  run_agent: async ({ action, target_url, contract_code, project_id, title, requirements, projectId, noteContent, note_content, contract, amount, pool, ...rest }) => {
+    const stub = (a, params) => ({ stub: true, action: a, params, message: 'Not yet wired — requires the Phase 6 wallet adapter (src/adapters/web3.js). No on-chain action was taken.' });
+    switch (action) {
+      case 'web3.mint': return stub('web3.mint', { contract, amount, ...rest });
+      case 'web3.swap': return stub('web3.swap', rest);
+      case 'web3.lp_snapshot': return { ...stub('web3.lp_snapshot', { pool, amount, ...rest }), pool: pool || 'BTC/USDC HyperEVM Vault', note: 'No live pool data — connect an RPC/wallet adapter to fetch real telemetry.' };
+      case 'journal.record': {
+        const pid = projectId || project_id;
+        const text = noteContent || note_content || rest.text;
+        if (!pid || !text) throw new Error('journal.record requires projectId + noteContent');
+        return mutate((s) => {
+          const proj = s.projects.find((p) => p.id === pid);
+          if (!proj) throw new Error(`project not found: ${pid}`);
+          const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+          proj.detail = (proj.detail || '') + `\n\n// STRATEGY JOURNAL LOG [${ts}]\n${text}`;
+          return { added: true, project: proj.name, id: proj.id };
+        });
+      }
+      case 'audit.scan': {
+        let code = contract_code || '';
+        if (!code && project_id) {
+          const s = ensureShape(await apiGet());
+          const proj = s.projects.find((p) => p.id === project_id);
+          code = proj ? (proj.detail || '') : '';
+        }
+        const src = String(code);
+        const has = (re) => re.test(src);
+        const findings = [
+          { check: 'Pragma version lock', status: has(/pragma\s+solidity\s+0\.\d+\.\d+/) ? 'PASS: locked pragma found' : 'RECOMMEND: lock solidity version (e.g. pragma solidity 0.8.24;)', severity: 'LOW' },
+          { check: 'ReentrancyGuard', status: has(/ReentrancyGuard|nonReentrant/) ? 'PASS: guard present' : 'REVIEW: no ReentrancyGuard/nonReentrant found in supplied text', severity: 'MEDIUM' },
+          { check: 'tx.origin usage', status: has(/tx\.origin/) ? 'FLAG: tx.origin present — phishable auth, prefer msg.sender' : 'PASS: no tx.origin', severity: 'HIGH' },
+          { check: 'delegatecall', status: has(/delegatecall/) ? 'REVIEW: delegatecall present — verify implementation slot safety' : 'PASS: no delegatecall', severity: 'MEDIUM' },
+          { check: 'Oracle freshness', status: has(/updatedAt|stale|freshness|median|heartbeat/i) ? 'PASS: freshness/median logic mentioned' : 'INFO: no oracle freshness logic found in supplied text', severity: 'INFO' },
+          { check: 'Access control', status: has(/Ownable|onlyOwner|AccessControl|onlyRole/) ? 'PASS: ownership/role gate present' : 'REVIEW: no Ownable/AccessControl found in supplied text', severity: 'MEDIUM' },
+        ];
+        const flags = findings.filter((f) => /FLAG|REVIEW/.test(f.status)).length;
+        return { timestamp: new Date().toISOString(), target: target_url || project_id || 'supplied text', score: `${Math.max(0, 100 - flags * 12)}/100`, findings, note: 'Lightweight text checks only — run Slither/Mythril for a real audit.' };
+      }
+      case 'dev.generate_plan': {
+        if (!title) throw new Error('dev.generate_plan requires title');
+        return { plan: `// IMPLEMENTATION PLAN: ${String(title).toUpperCase()}\nGenerated by Security & Dev Planner Agent\nDate: ${new Date().toISOString().slice(0, 10)}\nRequirements: ${requirements || '(none supplied)'}\n\n1. Architecture Phase:\n   - Define data structures and state variables\n   - Set up test harness (Foundry/Hardhat)\n2. Security Controls:\n   - Formal verification of invariants\n   - Access control checks (Ownable / Roles)\n3. Deployment & Verification:\n   - Testnet deployment scripts\n   - Contract verification on Blockscout/Etherscan` };
+      }
+      default: throw new Error(`unknown action: ${action} (use list_agents)`);
+    }
+  },
 };
 
 // ---------- CLI ----------
@@ -128,6 +189,8 @@ async function runCli() {
     case 'set-notes': out = await Ops.set_notes({ text: args['text-file'] ? fromFile(args['text-file']) : need('text') }); break;
     case 'export': { const s = await Ops.get_state(); if (args.out) fs.writeFileSync(args.out, JSON.stringify(s, null, 2)); out = { exported: true, to: args.out || 'stdout', counts: { research: s.research.rows.length, projects: s.projects.length, journal: s.journal.length } }; if (!args.out) console.log(JSON.stringify(s, null, 2)); break; }
     case 'import': out = await Ops.import_state({ state: JSON.parse(fromFile(need('in'))) }); break;
+    case 'list-agents': out = await Ops.list_agents(); break;
+    case 'run-agent': out = await Ops.run_agent({ action: need('action'), target_url: args['target-url'], contract_code: args['code-file'] ? fromFile(args['code-file']) : args.code, project_id: args['project-id'], projectId: args['project-id'], title: args.title, requirements: args.requirements, noteContent: args['note-content'] || args.text, contract: args.contract, amount: args.amount, pool: args.pool }); break;
     default:
       console.error('Usage: status | get | add-research | add-project | add-journal | set-notes | export | import | mcp');
       process.exit(2);
@@ -143,6 +206,8 @@ const TOOLS = [
   { name: 'paper_add_project', description: 'Add/enroll a project (dedupes on name)', inputSchema: { type: 'object', properties: { name: { type: 'string' }, source: { type: 'string' }, link: { type: 'string' }, status: { type: 'string' }, detail: { type: 'string' } }, required: ['name'] } },
   { name: 'paper_add_journal', description: 'Log a degen trade/LP journal entry (dedupes on date+pair+action)', inputSchema: { type: 'object', properties: { date: { type: 'string' }, type: { type: 'string' }, pair: { type: 'string' }, action: { type: 'string' }, size: { type: 'string' }, range: { type: 'string' }, pnl: { type: 'string' }, status: { type: 'string' }, notes: { type: 'string' } }, required: ['pair', 'action'] } },
   { name: 'paper_set_notes', description: 'Replace the scratchpad notes text', inputSchema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] } },
+  { name: 'paper_list_agents', description: 'List lazy agents + their actions (nothing loaded until run)', inputSchema: { type: 'object', properties: {} } },
+  { name: 'paper_run_agent', description: 'Run one lazy agent action on demand: audit.scan | dev.generate_plan | journal.record | web3.mint | web3.swap | web3.lp_snapshot (web3.* are honest stubs until wallet adapter lands)', inputSchema: { type: 'object', properties: { action: { type: 'string' }, target_url: { type: 'string' }, contract_code: { type: 'string' }, project_id: { type: 'string' }, title: { type: 'string' }, requirements: { type: 'string' }, noteContent: { type: 'string' } }, required: ['action'] } },
 ];
 function runMcp() {
   const rl = readline.createInterface({ input: process.stdin });
@@ -162,7 +227,7 @@ function runMcp() {
         send({ jsonrpc: '2.0', id, result: { tools: TOOLS } });
       } else if (method === 'tools/call') {
         const name = params?.name; const args = params?.arguments || {};
-        const map = { paper_status: Ops.status, paper_get_state: Ops.get_state, paper_add_research: Ops.add_research, paper_add_project: Ops.add_project, paper_add_journal: Ops.add_journal, paper_set_notes: Ops.set_notes };
+        const map = { paper_status: Ops.status, paper_get_state: Ops.get_state, paper_add_research: Ops.add_research, paper_add_project: Ops.add_project, paper_add_journal: Ops.add_journal, paper_set_notes: Ops.set_notes, paper_list_agents: Ops.list_agents, paper_run_agent: Ops.run_agent };
         if (!map[name]) throw new Error(`unknown tool ${name}`);
         const result = await map[name](args);
         send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] } });

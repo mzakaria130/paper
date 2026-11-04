@@ -9,7 +9,48 @@ class Registry {
   constructor() {
     this.actions = new Map();
     this.agents = new Map();
+    this.lazyAgents = new Map(); // id -> { create, actions, events, loaded }
     this.cardSlots = new Map();
+  }
+
+  /**
+   * Register an agent LAZILY (default mode). The factory is NOT called and
+   * no actions/listeners are wired until the agent is first needed:
+   *  - executeAction(actionId) auto-loads the owning agent, or
+   *  - ensureAgent(id) / runAgent(id, actionId, ctx) loads it explicitly.
+   * Always-on is opt-in only (see app.js agent mode).
+   */
+  registerLazyAgent({ id, create, actions = [], events = [] }) {
+    if (!id || typeof create !== 'function') throw new Error('[Registry] Lazy agent needs id + create()');
+    this.lazyAgents.set(id, { id, create, actions, events, loaded: false, instance: null });
+    bus.emit('registry:lazy_agent_registered', { id, actions, events });
+    console.log(`[Registry] Lazy Agent registered: ${id} (loads on first use)`);
+  }
+
+  /** Instantiate + register a lazy agent on demand. Idempotent. */
+  ensureAgent(id) {
+    const lazy = this.lazyAgents.get(id);
+    if (this.agents.has(id)) return this.agents.get(id);
+    if (!lazy) throw new Error(`[Registry] Unknown agent: ${id}`);
+    const instance = lazy.create();
+    lazy.instance = instance;
+    lazy.loaded = true;
+    this.registerAgent(instance);
+    return instance;
+  }
+
+  /** Explicit on-demand run: load agent (if needed) then execute its action. */
+  async runAgent(agentId, actionId, context = {}) {
+    const agent = this.ensureAgent(agentId);
+    if (typeof agent.runAction === 'function') return agent.runAction(actionId, context);
+    return this.executeAction(actionId, { agentId, ...context });
+  }
+
+  listLazyAgents() {
+    return Array.from(this.lazyAgents.values()).map((l) => ({
+      id: l.id, actions: l.actions, events: l.events, loaded: l.loaded,
+      mode: l.loaded ? 'loaded' : 'lazy',
+    }));
   }
 
   /**
@@ -69,7 +110,17 @@ class Registry {
    * Execute an action by ID with error boundary & telemetry
    */
   async executeAction(actionId, context = {}) {
-    const action = this.actions.get(actionId);
+    let action = this.actions.get(actionId);
+    if (!action) {
+      // Lazy path: find the unloaded agent that owns this action and load it.
+      for (const lazy of this.lazyAgents.values()) {
+        if (!lazy.loaded && lazy.actions.includes(actionId)) {
+          this.ensureAgent(lazy.id);
+          action = this.actions.get(actionId);
+          break;
+        }
+      }
+    }
     if (!action) {
       throw new Error(`[Registry] Action "${actionId}" not found in registry.`);
     }

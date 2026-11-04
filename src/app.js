@@ -134,9 +134,31 @@ function initKeyboardShortcuts() {
 }
 
 function initAgents() {
-  const web3Journaler = new Web3JournalerAgent();
-  registry.registerAgent(web3Journaler);
+  // LAZY by default: agents are registered as factories only. They load
+  // (instantiate + wire actions/listeners) on first use via
+  // registry.executeAction(...) or registry.runAgent(...).
+  // ALWAYS-ON is opt-in only:
+  //   localStorage.setItem('paper_agent_mode', 'always')  (then reload), or
+  //   http://localhost:8080/?agents=always, or
+  //   PaperWorkspace.agents.setMode('always') at runtime.
+  const always = new URLSearchParams(location.search).get('agents') === 'always'
+    || localStorage.getItem('paper_agent_mode') === 'always';
 
-  const securityAuditor = new SecurityAuditorAgent();
-  registry.registerAgent(securityAuditor);
+  const defs = [
+    { id: 'agent.web3_journaler', create: () => new Web3JournalerAgent(), actions: ['web3.mint', 'web3.swap', 'web3.lp_snapshot', 'journal.record'], events: ['research:promoted'] },
+    { id: 'agent.security_auditor', create: () => new SecurityAuditorAgent(), actions: ['audit.scan', 'dev.generate_plan'], events: [] },
+  ];
+
+  for (const def of defs) {
+    registry.registerLazyAgent(def);
+    if (always) registry.ensureAgent(def.id);
+  }
+  window.PaperWorkspace.agents = {
+    mode: always ? 'always' : 'lazy',
+    list: () => registry.listLazyAgents(),
+    ensure: (id) => registry.ensureAgent(id),
+    run: (id, actionId, ctx) => registry.runAgent(id, actionId, ctx),
+    setMode: (m) => { localStorage.setItem('paper_agent_mode', m); console.log(`[Paper] agent mode set to "${m}" — reload to apply`); },
+  };
+  console.log(`[Paper] Agents ready in ${always ? 'ALWAYS-ON' : 'LAZY (on-demand)'} mode: ${defs.map((d) => d.id).join(', ')}`);
 }

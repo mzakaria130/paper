@@ -42,3 +42,17 @@ Bridge (no browser automation needed):
                                     paper_add_journal, paper_set_notes)
 All mutations dedupe (research: project+link, project: name,
 journal: date+pair+action) and are read-modify-write via /api/state.
+
+[LAZY_AGENTS]  (default mode)
+Agents are LAZY by default — factories only, nothing instantiates or wires
+listeners at startup. First use loads the owner:
+  - browser: registry.executeAction('audit.scan', ...) auto-loads its agent;
+    explicit: PaperWorkspace.agents.ensure(id) / .run(id, action, ctx)
+  - bridge:   node tools/paper-bridge.mjs list-agents
+              node tools/paper-bridge.mjs run-agent --action audit.scan --project-id proj_1
+              MCP: paper_list_agents / paper_run_agent
+Always-on is opt-in only: localStorage paper_agent_mode='always', or
+?agents=always, or PaperWorkspace.agents.setMode('always') + reload.
+Real vs stub: audit.scan (lightweight text checks), dev.generate_plan and
+journal.record are real. web3.mint/swap/lp_snapshot return {stub:true}
+until the Phase 6 wallet adapter lands — no fake tx hashes.

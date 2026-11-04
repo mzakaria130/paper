@@ -1,9 +1,10 @@
 /**
- * Security Auditor & Dev Planner Agent Stub
- * Ready-to-integrate agent for:
- * - Scanning smart contracts or repos for vulnerabilities
- * - Producing architecture roadmap specifications
- * - Directly writing audit & dev plans into Project Detail or Buffer
+ * Security Auditor & Dev Planner Agent
+ * Lazy by default: instantiated only on first use (see registry lazy agents).
+ * - audit.scan: REAL lightweight static text checks (pragma lock, reentrancy
+ *   guard, oracle freshness, tx.origin, delegatecall...). Not a substitute
+ *   for Slither/Mythril — it reads the supplied code/project detail only.
+ * - dev.generate_plan: templated blueprint from title/requirements.
  */
 import { BaseAgent } from './agent-interface.js';
 import { store } from '../core/store.js';
@@ -34,19 +35,25 @@ export class SecurityAuditorAgent extends BaseAgent {
     });
   }
 
-  async runSecurityAudit({ targetUrl, contractCode }) {
-    this.log(`Initiating security audit for: ${targetUrl || 'Provided Snippet'}`);
-    // Integration boundary: Connect to Slither, Mythril, LLM security prompt, or backend RPC
+  async runSecurityAudit({ targetUrl, contractCode, projectId }) {
+    let code = contractCode || '';
+    if (!code && projectId) {
+      const proj = (store.get('projects') || []).find((p) => p.id === projectId);
+      code = proj ? (proj.detail || '') : '';
+    }
+    const src = String(code);
+    const has = (re) => re.test(src);
     const findings = [
-      { severity: 'INFO', check: 'ReentrancyGuard', status: 'PASS' },
-      { severity: 'LOW', check: 'Floating Pragma Check', status: 'RECOMMEND: Lock solidity version' },
-      { severity: 'INFO', check: 'Oracle Price Freshness', status: 'PASS: Medianizer validated' }
+      { check: 'Pragma version lock', status: has(/pragma\s+solidity\s+0\.\d+\.\d+/) ? 'PASS: locked pragma found' : 'RECOMMEND: lock solidity version (e.g. pragma solidity 0.8.24;)', severity: 'LOW' },
+      { check: 'ReentrancyGuard', status: has(/ReentrancyGuard|nonReentrant/) ? 'PASS: guard present' : 'REVIEW: no ReentrancyGuard/nonReentrant found in supplied text', severity: 'MEDIUM' },
+      { check: 'tx.origin usage', status: has(/tx\.origin/) ? 'FLAG: tx.origin present — phishable auth, prefer msg.sender' : 'PASS: no tx.origin', severity: 'HIGH' },
+      { check: 'delegatecall', status: has(/delegatecall/) ? 'REVIEW: delegatecall present — verify implementation slot safety' : 'PASS: no delegatecall', severity: 'MEDIUM' },
+      { check: 'Oracle freshness', status: has(/updatedAt|stale|freshness|median|heartbeat/i) ? 'PASS: freshness/median logic mentioned' : 'INFO: no oracle freshness logic found in supplied text', severity: 'INFO' },
+      { check: 'Access control', status: has(/Ownable|onlyOwner|AccessControl|onlyRole/) ? 'PASS: ownership/role gate present' : 'REVIEW: no Ownable/AccessControl found in supplied text', severity: 'MEDIUM' },
     ];
-    return {
-      timestamp: new Date().toISOString(),
-      score: '98/100',
-      findings
-    };
+    const flags = findings.filter((f) => /FLAG|REVIEW/.test(f.status)).length;
+    const score = Math.max(0, 100 - flags * 12);
+    return { timestamp: new Date().toISOString(), target: targetUrl || projectId || 'supplied text', score: `${score}/100`, findings, note: 'Lightweight text checks only — run Slither/Mythril for a real audit.' };
   }
 
   async generateDevPlan({ title, requirements }) {

@@ -1,10 +1,9 @@
 /**
- * Web3 Strategy & Journaler Agent Stub
- * Ready-to-integrate agent for:
- * - Minting tokens / interacting with contracts
- * - Swap & trade routing
- * - Liquidity Provision (LP) tracking
- * - Automatic journaling of execution into the Project Card or Buffer Card
+ * Web3 Strategy & Journaler Agent
+ * Lazy by default: instantiated only on first use (see registry lazy agents).
+ * - journal.record: REAL (appends to project detail via store)
+ * - web3.mint / web3.swap / web3.lp_snapshot: STUBS until wallet adapter
+ *   (Phase 6) lands — they return { stub: true } instead of fake success.
  */
 import { BaseAgent } from './agent-interface.js';
 import { store } from '../core/store.js';
@@ -21,6 +20,13 @@ export class Web3JournalerAgent extends BaseAgent {
 
   setupListeners() {
     // Register actions with the global registry
+    this.registry.registerAction({
+      id: 'web3.swap',
+      name: 'Execute Swap (stub — needs wallet adapter)',
+      category: 'web3',
+      handler: async (ctx) => this.stub('web3.swap', ctx)
+    });
+
     this.registry.registerAction({
       id: 'web3.mint',
       name: 'Execute Mint / Contract Call',
@@ -48,26 +54,16 @@ export class Web3JournalerAgent extends BaseAgent {
     });
   }
 
+  stub(actionId, context) {
+    return { stub: true, action: actionId, params: context, message: 'Not yet wired — requires the Phase 6 wallet adapter (src/adapters/web3.js). No on-chain action was taken.' };
+  }
+
   async handleMint(context) {
-    this.log('Executing mint action with params:', context);
-    // Integration boundary: Connect to ethers/viem contract instance here
-    const receipt = {
-      txHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-      status: 'SUCCESS',
-      gasUsed: '48210',
-      timestamp: new Date().toISOString()
-    };
-    return receipt;
+    return this.stub('web3.mint', context);
   }
 
   async handleLPSnapshot(context) {
-    this.log('Recording LP telemetry snapshot:', context);
-    return {
-      pool: context.pool || 'BTC/USDC HyperEVM Vault',
-      liquidity: context.amount || '$15,000.00',
-      feesEarned24h: '$42.18',
-      apy: '14.8%'
-    };
+    return { ...this.stub('web3.lp_snapshot', context), pool: context.pool || 'BTC/USDC HyperEVM Vault', note: 'No live pool data — connect an RPC/wallet adapter to fetch real telemetry.' };
   }
 
   async recordStrategyJournal({ projectId, noteContent }) {
