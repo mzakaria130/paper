@@ -657,3 +657,132 @@ body {
   border-color: var(--pt-accent) !important;
   box-shadow: 0 0 0 2px var(--pt-accent) !important;
 }
+
+
+/* ==========================================================================
+   RUNNING AGENT & LIB STATUS TICKER TAPE (PAPETRADE LIVE PILLS)
+   ========================================================================== */
+
+.agent-ticker-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--pt-panel);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius);
+  padding: 6px 12px;
+  gap: 12px;
+  overflow: hidden;
+  box-shadow: var(--pt-inner-highlight);
+  position: relative;
+  z-index: 20;
+}
+
+.agent-ticker-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--pt-ink-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-right: 1px solid var(--pt-border);
+  padding-right: 12px;
+}
+
+.agent-ticker-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+}
+
+.agent-ticker-track {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  animation: tickerScroll 36s linear infinite;
+}
+
+/* Pause the animation seamlessly when hovering over any individual pill */
+.agent-ticker-track.ticker-paused,
+.agent-ticker-track:hover {
+  animation-play-state: paused !important;
+}
+
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.agent-pill {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.agent-pill-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pt-panel-raised);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pt-ink);
+  box-shadow: var(--pt-inner-highlight);
+  transition: border-color 0.12s ease, transform 0.1s ease, box-shadow 0.12s ease;
+  user-select: none;
+}
+
+.agent-pill:hover .agent-pill-inner {
+  border-color: var(--pt-ink);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+}
+
+.agent-pill-icon {
+  font-size: 11px;
+}
+
+.agent-pill-title {
+  letter-spacing: 0.03em;
+}
+
+/* Rich Papertrade Detail Popover Card */
+.agent-pill-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  width: 260px;
+  background: var(--pt-panel-raised);
+  border: 1px solid var(--pt-border-hover);
+  border-radius: var(--pt-radius-xs);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  padding: 10px;
+  font-family: var(--font-mono);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  z-index: 1000;
+}
+
+.agent-pill:hover .agent-pill-popover {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}

@@ -1,3 +1,4 @@
+import { initAgentTicker } from './modules/agent-ticker.js';
 /**
  * PAPER // LOCAL WORKSPACE DASHBOARD
  * Modular Bootstrapper & Entry Point
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. Core Visuals & System Theme
   initTheme();
   initAsciiBackground();
+  initAgentTicker();
 
   // 2. Dashboard Cards (Research, Project, Journal, Buffer)
   initResearchTable();
