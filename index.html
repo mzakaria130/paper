@@ -350,6 +350,23 @@
         </div>
       </section>
 
+      <!-- ==================================================================
+           SECURITY RUNNING TICKER (BOTTOM) — taller twin of the top
+           ACTIVE AGENTS ticker, for security info. Popover opens UPWARD
+           so it never clips off the bottom of the screen.
+           ================================================================== -->
+      <div class="agent-ticker-wrapper security-ticker">
+        <div class="agent-ticker-label">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-[var(--pt-positive)] animate-pulse"></span>
+          <span class="font-mono">SECURITY AUDIT // LIVE:</span>
+        </div>
+        <div class="agent-ticker-viewport" id="securityTickerViewport">
+          <div class="agent-ticker-track" id="securityTickerTrack">
+            <!-- Dynamically populated security pills, taller than the top ticker -->
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Hidden file input for JSON restore -->

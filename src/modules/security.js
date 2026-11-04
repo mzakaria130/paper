@@ -33,6 +33,63 @@ export function initSecurityCard() {
   const fixesEl = document.getElementById('auditFixes');
   const reportEl = document.getElementById('auditReportPre');
   const metaEl = document.getElementById('auditMeta');
+  const tickerTrack = document.getElementById('securityTickerTrack');
+
+  // ---- Bottom security running ticker (taller twin of the top ticker) ----
+  function securityPills() {
+    const a = lastAudit;
+    const checks = a ? a.checks : [];
+    const passed = checks.filter((c) => c.status === 'PASS').length;
+    const findings = a ? (a.findings || []) : [];
+    const flags = findings.filter((f) => ['FLAG', 'REVIEW'].includes(f.status)).length;
+    const fixes = a ? checks.filter((c) => c.fix).length : 0;
+    return [
+      { id: 'sec.auditor', name: 'SECURITY AUDITOR', icon: '🛡️', badge: a ? a.score : 'LAZY', badgeType: a ? 'positive' : 'accent', sub: a ? `Target: ${a.target}` : 'On-demand — press RUN AUDIT', type: 'AGENT', status: a ? 'DONE' : 'IDLE', stats: { mode: 'Lazy / on-demand', engine: 'audit-engine.js (shared)', checks: '12 best-practice rules' } },
+      { id: 'sec.checks', name: 'CHECKLIST', icon: '✅', badge: a ? `${passed}/${checks.length} PASS` : '12 RULES', badgeType: 'cyan', sub: 'Pragma • Reentrancy • tx.origin • …', type: 'CHECKLIST', status: a ? 'DONE' : 'READY', stats: a ? Object.fromEntries(checks.map((c) => [c.name, c.status])) : { rules: 'pragma, reentrancy, tx.origin, delegatecall, oracle, access, calls, selfdestruct, randomness, front-run, visibility, loops' } },
+      { id: 'sec.findings', name: 'VULNERABILITIES', icon: '⚠️', badge: a ? `${findings.length} FOUND` : '—', badgeType: flags ? 'accent' : 'positive', sub: a ? `${flags} need review/fix` : 'Run an audit to scan', type: 'FINDINGS', status: a ? 'DONE' : 'IDLE', stats: a ? Object.fromEntries(findings.map((f) => [`${f.name} [${f.severity}]`, f.status])) : { status: 'No scan yet' } },
+      { id: 'sec.fixes', name: 'FIX PROPOSALS', icon: '🛠️', badge: a ? `${fixes} FIXES` : '—', badgeType: 'cyan', sub: 'Code snippets per finding', type: 'FIXES', status: a ? 'DONE' : 'IDLE', stats: { apply: 'Opt-in: audit.fix --apply appends to project detail', report: 'Markdown + download in card above' } },
+      { id: 'sec.lastrun', name: 'LAST RUN', icon: '🕐', badge: a ? 'DONE' : 'NEVER', badgeType: a ? 'positive' : 'accent', sub: a ? String(a.timestamp).slice(0, 19).replace('T', ' ') : 'Press RUN AUDIT in the card above', type: 'TELEMETRY', status: a ? 'DONE' : 'IDLE', stats: a ? { target: a.target, score: a.score, timestamp: a.timestamp } : { status: 'No run recorded' } },
+      { id: 'sec.mode', name: 'LAZY MODE', icon: '💤', badge: 'ON DEMAND', badgeType: 'accent', sub: 'Loads only on RUN — zero idle cost', type: 'MODE', status: 'READY', stats: { browser: 'PaperWorkspace.agents.ensure("agent.security_auditor")', bridge: 'paper_run_agent', alwaysOn: 'paper_agent_mode=always (opt-in)' } },
+    ];
+  }
+
+  function renderSecurityTicker() {
+    if (!tickerTrack) return;
+    const pills = securityPills();
+    const html = pills.map((item) => {
+      const badgeClass = item.badgeType === 'cyan' ? 'retro-badge-cyan' : item.badgeType === 'accent' ? 'retro-badge-accent' : 'retro-badge-positive';
+      const statsRows = Object.entries(item.stats || {}).map(([k, v]) => `
+        <div class="flex justify-between items-center text-[9px] gap-2 py-0.5">
+          <span class="text-[var(--pt-ink-muted)] uppercase">${escapeHtml(k)}:</span>
+          <span class="font-bold text-[var(--pt-ink)] truncate max-w-[180px]">${escapeHtml(v)}</span>
+        </div>`).join('');
+      return `
+        <div class="agent-pill group" data-agent-id="${escapeHtml(item.id)}">
+          <div class="agent-pill-inner">
+            <span class="agent-pill-icon">${item.icon}</span>
+            <span class="agent-pill-title">${escapeHtml(item.name)}</span>
+            <span class="retro-badge ${badgeClass} text-[8px] py-0 px-1 font-mono">${escapeHtml(item.badge)}</span>
+            <span class="agent-pill-sub">${escapeHtml(item.sub)}</span>
+          </div>
+          <div class="agent-pill-popover">
+            <div class="flex items-center justify-between pb-1 mb-1.5 border-b border-[var(--pt-border)] text-[10px]">
+              <span class="font-bold text-[var(--pt-ink)] flex items-center gap-1.5"><span>${item.icon}</span><span>${escapeHtml(item.name)}</span></span>
+              <span class="retro-badge ${badgeClass} text-[8px] py-0 px-1">${escapeHtml(item.type)}</span>
+            </div>
+            <p class="text-[10px] text-[var(--pt-ink-muted)] mb-2 leading-tight">${escapeHtml(item.sub)}</p>
+            <div class="bg-[var(--pt-panel-sunken)] p-1.5 rounded-[var(--pt-radius-xs)] border border-[var(--pt-border)] space-y-0.5 mb-1.5">${statsRows}</div>
+            <div class="flex items-center justify-between text-[8px] font-mono text-[var(--pt-ink-faint)] pt-1 border-t border-[var(--pt-border)]">
+              <span>STATUS: ${escapeHtml(item.status)}</span><span>AUTONOMOUS // RUNNING</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    tickerTrack.innerHTML = html + html; // duplicate for seamless marquee loop
+    tickerTrack.querySelectorAll('.agent-pill').forEach((pill) => {
+      pill.addEventListener('mouseenter', () => tickerTrack.classList.add('ticker-paused'));
+      pill.addEventListener('mouseleave', () => tickerTrack.classList.remove('ticker-paused'));
+    });
+  }
 
   function refreshProjects() {
     const projects = store.get('projects') || [];
@@ -114,6 +171,7 @@ export function initSecurityCard() {
     }
     scoreEl.textContent = audit.score;
     renderFindings(audit);
+    renderSecurityTicker();
     setStatus('DONE', 'retro-badge-positive');
     metaEl.textContent = `TARGET: ${audit.target} • ${audit.timestamp} • ${audit.checks.length} CHECKS`;
 
@@ -141,6 +199,7 @@ export function initSecurityCard() {
   bus.on('store:changed:projects', refreshProjects);
   refreshProjects();
   renderChecklist([], 0);
+  renderSecurityTicker();
   findingsEl.innerHTML = '<p class="text-[11px] py-2 text-[var(--pt-ink-muted)]">No audit run yet this session.</p>';
 
   // Restore last report if present.
