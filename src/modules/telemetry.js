@@ -118,12 +118,14 @@ export function applyTheme(theme) {
   const icon = document.getElementById('themeIcon');
   const mobileIcon = document.getElementById('mobileThemeIcon');
   if (theme === 'dark') {
-    if (icon) icon.textContent = '☼';
-    if (mobileIcon) mobileIcon.textContent = '☼';
+    // In Dark mode -> Ethereum logo (⧫)
+    if (icon) icon.textContent = '⧫';
+    if (mobileIcon) mobileIcon.textContent = '⧫';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0d1229');
   } else {
-    if (icon) icon.textContent = '☾';
-    if (mobileIcon) mobileIcon.textContent = '☾';
+    // In Light mode -> Bitcoin logo (₿)
+    if (icon) icon.textContent = '₿';
+    if (mobileIcon) mobileIcon.textContent = '₿';
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ede5d0');
   }
 }
