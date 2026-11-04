@@ -17,6 +17,7 @@ import { initScratchpad } from './modules/buffer.js';
 import { initTelemetry, applyTheme } from './modules/telemetry.js';
 import { initVisualArch } from './modules/visual-arch.js';
 import { initSecurityCard } from './modules/security.js';
+import { initPnlTicker } from './modules/pnl-ticker.js';
 
 import { Web3JournalerAgent } from './agents/web3-journaler.js';
 import { SecurityAuditorAgent } from './agents/security-auditor.js';
@@ -44,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTelemetry();
   initVisualArch();
   initSecurityCard();
+  initPnlTicker();
   initMobileMenu();
   initModals();
   initKeyboardShortcuts();

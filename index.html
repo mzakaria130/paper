@@ -351,18 +351,19 @@
       </section>
 
       <!-- ==================================================================
-           SECURITY RUNNING TICKER (BOTTOM) — taller twin of the top
-           ACTIVE AGENTS ticker, for security info. Popover opens UPWARD
-           so it never clips off the bottom of the screen.
+           PROFIT & LOSS RUNNING TICKER (BOTTOM) — thin, same height/style
+           as the top ACTIVE AGENTS ticker. Live from the journal above:
+           LP printing / degen / NFT sold / other / losses. Placeholder
+           running text until the journal has PnL data.
            ================================================================== -->
-      <div class="agent-ticker-wrapper security-ticker">
+      <div class="agent-ticker-wrapper">
         <div class="agent-ticker-label">
           <span class="inline-block w-1.5 h-1.5 rounded-full bg-[var(--pt-positive)] animate-pulse"></span>
-          <span class="font-mono">SECURITY AUDIT // LIVE:</span>
+          <span class="font-mono">PROFIT &amp; LOSS // LIVE:</span>
         </div>
-        <div class="agent-ticker-viewport" id="securityTickerViewport">
-          <div class="agent-ticker-track" id="securityTickerTrack">
-            <!-- Dynamically populated security pills, taller than the top ticker -->
+        <div class="agent-ticker-viewport" id="pnlTickerViewport">
+          <div class="agent-ticker-track" id="pnlTickerTrack">
+            <!-- Dynamically populated P&L pills, computed from the journal -->
           </div>
         </div>
       </div>

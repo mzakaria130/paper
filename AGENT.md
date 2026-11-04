@@ -71,3 +71,15 @@ paste code, press RUN AUDIT — the checklist ticks live like the top ticker,
 then findings/fixes/report render with COPY + MD download. Last report
 persists in store key auditReport (paper_audit_report). Still lightweight
 text checks only — Slither/Mythril remain the real audit tools.
+
+[LOCAL_FIRST_WORKFLOW]  (operator rule, always on)
+Finish every update LOCAL first, push to GitHub only on explicit approval:
+1. Implement locally in the workspace.
+2. Verify locally: syntax checks, live server curl (200 + /api/state),
+   bridge status, served-asset grep, and a user-visible check if UI changed.
+3. Report what changed + verification results, with the diff left uncommitted
+   or committed locally only — NEVER push on the same turn.
+4. Push ONLY when the operator explicitly says "push" (or equivalent
+   go-ahead). One approval = one push of the verified commit.
+Rationale: a broken push to main is public and shared; a broken local edit
+is private and fixable. Local-first keeps the blast radius at zero.
