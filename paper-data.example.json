@@ -1,0 +1,104 @@
+{
+  "version": 3,
+  "theme": "dark",
+  "asciiEnabled": true,
+  "research": {
+    "columns": [
+      {
+        "id": "source",
+        "name": "SOURCE"
+      },
+      {
+        "id": "project",
+        "name": "PROJECT"
+      },
+      {
+        "id": "link",
+        "name": "LINK"
+      }
+    ],
+    "rows": [
+      {
+        "id": "row_1",
+        "source": "ArXiv / Whitepaper",
+        "project": "Perpetual DEX Architecture",
+        "link": "https://arxiv.org"
+      },
+      {
+        "id": "row_2",
+        "source": "GitHub / Hyperliquid",
+        "project": "HyperEVM Smart Contracts",
+        "link": "https://github.com"
+      },
+      {
+        "id": "row_3",
+        "source": "Papertrade Specs",
+        "project": "Retro Flat UI Terminal",
+        "link": "https://papertrade.xyz"
+      },
+      {
+        "id": "row_feedthefire",
+        "source": "Cupang Ventures / X",
+        "project": "Feed The Fire (@FeedTheFireRH)",
+        "link": "https://feedfirereh.com/"
+      }
+    ]
+  },
+  "projects": [
+    {
+      "id": "proj_1",
+      "name": "Perpetual DEX Architecture",
+      "source": "ArXiv / Whitepaper",
+      "link": "https://arxiv.org",
+      "status": "ACTIVE",
+      "detail": "// PERPETUAL DEX ARCHITECTURE SPECIFICATION\n- Protocol: Synthetic peer-to-peer perpetuals built on HyperEVM\n- Margin Model: Cross-margin isolated vaults with extreme leverage\n- House Liquidity: Single pooled counterparty model with zero execution slippage\n- Fee Model: Zero traditional trading fees and zero funding rates\n- Oracle: Sub-second medianized reference price engine",
+      "createdAt": 0
+    },
+    {
+      "id": "proj_2",
+      "name": "HyperEVM Smart Contracts",
+      "source": "GitHub / Hyperliquid",
+      "link": "https://github.com",
+      "status": "IN PROGRESS",
+      "detail": "// HYPEREVM SMART CONTRACT IMPLEMENTATION\n- Solidity v0.8.24 deployment scripts\n- Foundry test coverage for liquidation parameters and loss rebate token\n- Automated gas estimation and batch execution pipelines",
+      "createdAt": 0
+    },
+    {
+      "id": "proj_feedthefire",
+      "name": "Feed The Fire",
+      "source": "Cupang Ventures / X",
+      "link": "https://feedfirereh.com/",
+      "status": "ACTIVE",
+      "detail": "// EXAMPLE PROJECT\n- Replace this detail with your own spec.\n- Keep wallet addresses and private handles out of git.",
+      "createdAt": 0
+    }
+  ],
+  "journal": [
+    {
+      "id": "jn_1",
+      "date": "2026-11-03",
+      "type": "LP",
+      "pair": "BTC/USDC HyperEVM",
+      "action": "ADD_LIQ",
+      "range": "$67,500 - $72,000",
+      "size": "$12,500",
+      "pnl": "+$420 (Fees)",
+      "status": "IN RANGE",
+      "notes": "Concentrated liquidity vault. Low impermanent loss risk during consolidation."
+    },
+    {
+      "id": "jn_2",
+      "date": "2026-11-02",
+      "type": "TRADE",
+      "pair": "HYPE / USD",
+      "action": "LONG 20x",
+      "range": "Entry: $42.50 | TP: $51.00",
+      "size": "$2,000",
+      "pnl": "+$1,680 (+84%)",
+      "status": "CLOSED",
+      "notes": "Breakout above range resistance with increasing spot volume. Took profit at $51."
+    }
+  ],
+  "notes": "// WELCOME TO YOUR LOCAL WORKSPACE\n--------------------------------------------\n- Card-based, flat retro operation\n- Papertrade outline design system\n- Runs 100% locally in browser (no cloud)\n- Stored safely in localStorage\n- Click [DATA] to export/import JSON backups\n--------------------------------------------\nScratchpad auto-saves on every keystroke.\n\n// EXAMPLE: add your own scratchpad notes here.",
+  "timestamp": "2026-11-04T00:00:00.000Z"
+}

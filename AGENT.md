@@ -27,3 +27,18 @@ Port: 8080 (via `node server.js`)
 [DEV_COMMANDS]
 Serve: node server.js
 Verify: node -e "const http=require('http');http.get('http://localhost:8080',(r)=>{console.log(r.statusCode);process.exit(0);});"
+
+[AGENT_BRIDGE]  (added: local API + CLI/MCP, zero-dep)
+Canonical state file: paper-data.json (gitignored). Browser store hydrates
+from GET /api/state on load and POSTs back on change (debounced), so agent
+fills made while the browser is closed appear on next reload.
+Bridge (no browser automation needed):
+  node tools/paper-bridge.mjs status
+  node tools/paper-bridge.mjs add-research --project "X" --link "https://..."
+  node tools/paper-bridge.mjs add-project --name "X" --status ACTIVE --detail-file ./d.txt
+  node tools/paper-bridge.mjs add-journal --pair "HYPE / USD" --action "LONG 20x"
+  node tools/paper-bridge.mjs mcp   (stdio MCP: paper_status, paper_get_state,
+                                    paper_add_research, paper_add_project,
+                                    paper_add_journal, paper_set_notes)
+All mutations dedupe (research: project+link, project: name,
+journal: date+pair+action) and are read-modify-write via /api/state.

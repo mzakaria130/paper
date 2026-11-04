@@ -138,6 +138,48 @@ class Store {
       journal: loadJSON(KEYS.JOURNAL, DEFAULT_JOURNAL),
       note: localStorage.getItem(KEYS.NOTES) !== null ? localStorage.getItem(KEYS.NOTES) : DEFAULT_NOTE,
     };
+    this._hydrating = true;
+    this._syncTimer = null;
+    this.initFromServer();
+  }
+
+  // Agent bridge: adopt canonical server state (paper-data.json via /api/state)
+  // if present; otherwise keep localStorage/defaults. Server file wins on
+  // first load so CLI/MCP fills made while the browser was closed appear.
+  async initFromServer() {
+    try {
+      const r = await fetch('/api/state');
+      const data = await r.json();
+      if (data && !data.initialized && data.research && Array.isArray(data.projects)) {
+        this.set('research', data.research, true);
+        this.set('projects', data.projects, true);
+        this.set('journal', data.journal, true);
+        this.set('note', data.notes, true);
+        if (typeof data.theme === 'string') this.set('theme', data.theme, true);
+        if (typeof data.asciiEnabled === 'boolean') this.set('asciiEnabled', data.asciiEnabled, true);
+        bus.emit('store:hydrated_from_server', data);
+      }
+    } catch (e) { /* offline/static-only mode: stay on localStorage */ }
+    this._hydrating = false;
+  }
+
+  // Persist canonical state back to the server file (debounced).
+  syncToServer() {
+    if (this._hydrating) return;
+    clearTimeout(this._syncTimer);
+    this._syncTimer = setTimeout(() => {
+      const snapshot = {
+        version: 3,
+        theme: this.state.theme,
+        asciiEnabled: this.state.asciiEnabled,
+        research: this.state.research,
+        projects: this.state.projects,
+        journal: this.state.journal,
+        notes: this.state.note,
+      };
+      fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snapshot) })
+        .catch((e) => console.warn('[Store] server sync failed', e));
+    }, 400);
   }
 
   get(key) {
@@ -156,6 +198,7 @@ class Store {
     }
     bus.emit(`store:changed:${key}`, val);
     bus.emit('store:changed', { key, value: val });
+    if (persist) this.syncToServer();
   }
 
   resetResearch() {

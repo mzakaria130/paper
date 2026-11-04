@@ -114,6 +114,54 @@ await window.PaperWorkspace.registry.executeAction('web3.mint', { contract: '0x.
 window.PaperWorkspace.bus.emit('project:detail_saved', { id: 'proj_1', detail: 'Audit findings...' });
 ```
 
+### Agent Bridge — local API + CLI/MCP (no browser automation)
+
+For agents that should fill the dashboard without clicking forms, the server
+exposes a tiny zero-dependency API backed by one canonical state file,
+`paper-data.json` (gitignored — your personal data stays out of git):
+
+- `GET /api/state` — current workspace state, or `{ "initialized": false }`
+- `POST /api/state` — validate shape and atomically write `paper-data.json`
+
+The browser store hydrates from `GET /api/state` on load and POSTs back on
+change (debounced), with `localStorage` kept as a cache. Fills made while
+the browser is closed therefore appear on the next reload.
+
+The CLI/MCP bridge lives in [`tools/paper-bridge.mjs`](tools/paper-bridge.mjs)
+and talks to that API. Requires `node server.js` running (default `:8080`).
+
+```bash
+# status + counts
+node tools/paper-bridge.mjs status
+
+# add rows (all mutations dedupe: research on project+link, project on
+# name, journal on date+pair+action)
+node tools/paper-bridge.mjs add-research --source "Cupang Ventures / X" --project "Feed The Fire" --link "https://feedfirereh.com/"
+node tools/paper-bridge.mjs add-project --name "Feed The Fire" --source "Cupang Ventures / X" --link "https://feedfirereh.com/" --status ACTIVE --detail-file ./detail.txt
+node tools/paper-bridge.mjs add-journal --date 2026-11-04 --type TRADE --pair "HYPE / USD" --action "LONG 20x" --size '$2,000' --pnl "+$100" --status CLOSED --notes "thesis"
+node tools/paper-bridge.mjs set-notes --text-file ./notes.txt
+
+# backup / restore (same v3 shape as the in-app [ DATA ] export)
+node tools/paper-bridge.mjs export --out paper-data.json
+node tools/paper-bridge.mjs import --in ./paper-data.json
+
+# MCP over stdio (for Hermes / any MCP client)
+node tools/paper-bridge.mjs mcp
+```
+
+MCP tools exposed: `paper_status`, `paper_get_state`, `paper_add_research`,
+`paper_add_project`, `paper_add_journal`, `paper_set_notes`.
+
+Starting state: copy [`paper-data.example.json`](paper-data.example.json)
+(placeholders only) to `paper-data.json`, or import a backup through the
+app's `[ DATA ]` modal. The API validates the v3 shape before writing:
+`research{columns,rows}`, `projects[]`, `journal[]`, `notes` string.
+
+Security note: this is a local-first workspace. The API has no auth by
+design — run it on localhost / a trusted LAN only, never expose `:8080`
+directly to the public internet, and keep `paper-data.json` out of git
+(it is already in `.gitignore`).
+
 ---
 
 ## 🔮 Future Expectations & Development Roadmap
