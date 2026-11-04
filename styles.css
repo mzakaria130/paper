@@ -1,0 +1,659 @@
+/* ==========================================================================
+   PAPER // RETRO FLAT DESIGN SYSTEM
+   Authentic recreation of https://exchange.papertrade.xyz
+   Outline-driven, tabular monospace, newsprint craft paper & night terminal
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root,
+[data-theme="light"] {
+  /* Papertrade Light Palette */
+  --pt-page: #ede5d0;
+  --pt-page-rgb: 237, 229, 208;
+  --pt-panel: #f4ecd8;
+  --pt-panel-rgb: 244, 236, 216;
+  --pt-panel-raised: #faf6ed;
+  --pt-panel-raised-rgb: 250, 246, 237;
+  --pt-panel-sunken: #e8dec8;
+  --pt-border: #d4cbba;
+  --pt-border-rgb: 212, 203, 186;
+  --pt-border-hover: #a99d80;
+  --pt-ink: #2a2520;
+  --pt-ink-rgb: 42, 37, 32;
+  --pt-ink-muted: #7a7060;
+  --pt-ink-muted-rgb: 122, 112, 96;
+  --pt-ink-faint: #998c76;
+  
+  --pt-positive: #2d5f3a;
+  --pt-positive-bg: #e2ede5;
+  --pt-negative: #8b2020;
+  --pt-negative-bg: #fae8e8;
+  --pt-accent: #7a6235;
+  --pt-accent-bg: #f5eedb;
+  --pt-cyan: #225a6e;
+  --pt-cyan-bg: #e1f1f7;
+
+  /* Papertrade Radii Tokens */
+  --pt-radius: 8px;
+  --pt-radius-md: 6px;
+  --pt-radius-sm: 4px;
+  --pt-radius-xs: 2px;
+
+  --pt-inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+[data-theme="dark"] {
+  /* Papertrade Night Palette */
+  --pt-page: #0d1229;
+  --pt-page-rgb: 13, 18, 41;
+  --pt-panel: #171d3d;
+  --pt-panel-rgb: 23, 29, 61;
+  --pt-panel-raised: #272f5a;
+  --pt-panel-raised-rgb: 39, 47, 90;
+  --pt-panel-sunken: #11172f;
+  --pt-border: #46537d;
+  --pt-border-rgb: 70, 83, 130;
+  --pt-border-hover: #8196d3;
+  --pt-ink: #f4eaf2;
+  --pt-ink-rgb: 244, 234, 242;
+  --pt-ink-muted: #c7c4d8;
+  --pt-ink-muted-rgb: 199, 196, 216;
+  --pt-ink-faint: #8794ba;
+  
+  --pt-positive: #4ade80;
+  --pt-positive-bg: #143322;
+  --pt-negative: #f87171;
+  --pt-negative-bg: #3d1719;
+  --pt-accent: #f0b5d0;
+  --pt-accent-bg: #3b2c11;
+  --pt-cyan: #38bdf8;
+  --pt-cyan-bg: #112d3e;
+
+  --pt-inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================================
+   PAPERTRADE OUTLINE EXCEL-LIKE RETRO TABLE
+   ========================================================================== */
+
+.retro-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  background: var(--pt-panel-raised);
+}
+
+.retro-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.retro-table th {
+  background: var(--pt-panel-raised);
+  border: 1px solid var(--pt-border);
+  padding: 6px 10px;
+  text-align: left;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pt-ink);
+  white-space: nowrap;
+}
+
+.retro-table td {
+  border: 1px solid var(--pt-border);
+  padding: 3px 6px;
+  background: var(--pt-panel);
+  vertical-align: middle;
+  transition: background 0.1s ease;
+}
+
+.retro-table tbody tr:hover td {
+  background: var(--pt-panel-raised);
+}
+
+.table-cell-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--pt-radius-xs);
+  color: var(--pt-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 6px;
+  outline: none;
+  transition: border-color 0.1s ease, background 0.1s ease;
+}
+
+.table-cell-input:focus {
+  background: var(--pt-panel-raised);
+  border-color: var(--pt-accent);
+  box-shadow: 0 0 0 1px var(--pt-accent);
+}
+
+.col-header-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.col-del-btn {
+  opacity: 0.4;
+  cursor: pointer;
+  padding: 0 3px;
+  font-size: 10px;
+  transition: opacity 0.1s ease, color 0.1s ease;
+}
+
+.col-header-wrap:hover .col-del-btn {
+  opacity: 1;
+}
+
+.col-del-btn:hover {
+  color: var(--pt-negative);
+  font-weight: bold;
+}
+
+/* Active row highlight in Project Table */
+.retro-table tbody tr.active-project-row td {
+  background: var(--pt-panel-raised) !important;
+  border-top: 1px solid var(--pt-border-hover);
+  border-bottom: 1px solid var(--pt-border-hover);
+}
+
+.retro-table tbody tr.active-project-row td:first-child {
+  border-left: 3px solid var(--pt-ink);
+}
+
+/* Floating Project Hover Preview */
+.project-hover-popover {
+  position: fixed;
+  z-index: 1000;
+  max-width: 340px;
+  background: var(--pt-panel-raised);
+  border: 1px solid var(--pt-border-hover);
+  border-radius: var(--pt-radius-xs);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+  font-family: var(--font-mono);
+  padding: 8px 10px;
+  animation: popoverFadeIn 0.1s ease-out forwards;
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Background ASCII Bitcoin Canvas */
+#asciiCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.14;
+  transition: opacity 0.2s ease;
+}
+
+[data-theme="dark"] #asciiCanvas {
+  opacity: 0.20;
+}
+
+#asciiCanvas.hidden {
+  display: none !important;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--pt-page);
+  color: var(--pt-ink);
+  font-family: var(--font-ui);
+  line-height: 1.5;
+  min-height: 100vh;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  background-image: radial-gradient(rgba(var(--pt-ink-rgb), 0.04) 1px, transparent 0);
+  background-size: 16px 16px;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom retro scrollbar matching papertrade */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--pt-panel-sunken);
+  border-left: 1px solid var(--pt-border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pt-ink-muted);
+}
+
+/* ==========================================================================
+   PAPERTRADE OUTLINE CARDS & PANELS
+   ========================================================================== */
+
+.retro-card {
+  background: var(--pt-panel);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: border-color 0.12s ease;
+}
+
+.retro-card:hover {
+  border-color: var(--pt-border-hover);
+}
+
+.retro-header {
+  background: var(--pt-panel-raised);
+  border-bottom: 1px solid var(--pt-border);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pt-ink);
+  box-shadow: var(--pt-inner-highlight);
+}
+
+/* ==========================================================================
+   PAPERTRADE OUTLINE BUTTONS
+   ========================================================================== */
+
+.retro-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  background: var(--pt-panel-raised);
+  color: var(--pt-ink);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  box-shadow: var(--pt-inner-highlight);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: border-color 0.1s ease, background 0.1s ease, color 0.1s ease;
+  user-select: none;
+  white-space: nowrap;
+  outline: none;
+}
+
+.retro-btn:hover {
+  border-color: var(--pt-border-hover);
+  background: var(--pt-panel-raised);
+  color: var(--pt-ink);
+}
+
+.retro-btn:active {
+  background: var(--pt-panel-sunken);
+}
+
+.retro-btn-primary {
+  background: var(--pt-ink);
+  color: var(--pt-panel-raised);
+  border: 1px solid var(--pt-ink);
+  box-shadow: none;
+}
+
+.retro-btn-primary:hover {
+  background: var(--pt-ink-muted);
+  border-color: var(--pt-ink-muted);
+  color: #fff;
+}
+
+.retro-btn-danger {
+  color: var(--pt-negative);
+  border-color: var(--pt-border);
+}
+
+.retro-btn-danger:hover {
+  border-color: var(--pt-negative);
+  background: var(--pt-negative-bg);
+}
+
+/* ==========================================================================
+   PAPERTRADE OUTLINE INPUTS & SELECTS
+   ========================================================================== */
+
+.retro-input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--pt-panel-raised);
+  color: var(--pt-ink);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  width: 100%;
+}
+
+.retro-input:focus {
+  border-color: var(--pt-accent);
+  box-shadow: 0 0 0 2px rgba(var(--pt-ink-rgb), 0.08);
+}
+
+.retro-input::placeholder {
+  color: var(--pt-ink-faint);
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   PAPERTRADE OUTLINE PILLS & BADGES
+   ========================================================================== */
+
+.retro-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  background: var(--pt-panel-raised);
+  color: var(--pt-ink-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retro-badge-positive {
+  color: var(--pt-positive);
+  background: var(--pt-positive-bg);
+  border-color: rgba(var(--pt-positive-rgb, 45, 95, 58), 0.4);
+}
+
+.retro-badge-negative {
+  color: var(--pt-negative);
+  background: var(--pt-negative-bg);
+  border-color: rgba(var(--pt-negative-rgb, 139, 32, 32), 0.4);
+}
+
+.retro-badge-accent {
+  color: var(--pt-accent);
+  background: var(--pt-accent-bg);
+  border-color: rgba(122, 98, 53, 0.4);
+}
+
+.retro-badge-cyan {
+  color: var(--pt-cyan);
+  background: var(--pt-cyan-bg);
+  border-color: rgba(34, 90, 110, 0.4);
+}
+
+/* ==========================================================================
+   TILES & ROWS (BOOKMARKS, TASKS, HABITS)
+   ========================================================================== */
+
+.bookmark-tile {
+  background: var(--pt-panel-raised);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  color: var(--pt-ink);
+  transition: border-color 0.1s ease, background 0.1s ease;
+  box-shadow: var(--pt-inner-highlight);
+}
+
+.bookmark-tile:hover {
+  border-color: var(--pt-border-hover);
+  background: var(--pt-panel);
+}
+
+.bookmark-tile .delete-btn {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.bookmark-tile:hover .delete-btn {
+  opacity: 1;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--pt-border);
+  transition: background 0.1s ease;
+}
+
+.todo-row:last-child {
+  border-bottom: none;
+}
+
+.todo-row:hover {
+  background: var(--pt-panel-raised);
+}
+
+.todo-row.completed .todo-text {
+  text-decoration: line-through;
+  color: var(--pt-ink-faint);
+}
+
+/* Papertrade Outline Checkbox */
+.retro-checkbox {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--pt-border);
+  background: var(--pt-panel-raised);
+  border-radius: var(--pt-radius-xs);
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.1s ease, background 0.1s ease;
+}
+
+.retro-checkbox:hover {
+  border-color: var(--pt-border-hover);
+}
+
+.retro-checkbox:checked {
+  background: var(--pt-ink);
+  border-color: var(--pt-ink);
+}
+
+.retro-checkbox:checked::before {
+  content: "✓";
+  color: var(--pt-panel-raised);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+/* ==========================================================================
+   OUTLINE MODALS & TOASTS
+   ========================================================================== */
+
+.retro-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.retro-modal {
+  background: var(--pt-panel);
+  border: 1px solid var(--pt-border-hover);
+  border-radius: var(--pt-radius);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.retro-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--pt-panel-raised);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 0.15s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   VISUAL ARCHITECTURE & BRAINSTORMING NODE GRAPH
+   ========================================================================== */
+
+#archCanvasViewport {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  overflow: hidden;
+  background-color: var(--pt-panel-sunken);
+  background-image: radial-gradient(rgba(var(--pt-ink-rgb), 0.12) 1.5px, transparent 0);
+  background-size: 20px 20px;
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  cursor: grab;
+  user-select: none;
+}
+
+#archCanvasViewport:active {
+  cursor: grabbing;
+}
+
+#graphWorld {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  width: 2400px;
+  height: 1800px;
+  pointer-events: none;
+}
+
+#graphSvgWires {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.graph-wire {
+  stroke: var(--pt-border-hover);
+  stroke-width: 2px;
+  fill: none;
+  stroke-dasharray: 4 3;
+}
+
+.graph-wire-label {
+  fill: var(--pt-ink-muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: bold;
+}
+
+#graphNodesContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.graph-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 190px;
+  background: var(--pt-panel-raised);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-radius-xs);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  cursor: move;
+  transition: border-color 0.1s ease, box-shadow 0.1s ease;
+  user-select: none;
+}
+
+.graph-node:hover {
+  border-color: var(--pt-ink);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+}
+
+.graph-node-active {
+  border-color: var(--pt-accent) !important;
+  box-shadow: 0 0 0 2px var(--pt-accent) !important;
+}

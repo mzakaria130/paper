@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "paper-local-workspace",
+  "version": "1.0.0",
+  "description": "Local-first retro workspace dashboard designed for autonomous agent development and Web3 integration",
+  "entrypoint": "server.js",
+  "port": 8080,
+  "supportedAgents": [
+    "grokbot",
+    "muse",
+    "flok",
+    "openclaw",
+    "hermes",
+    "antigravity",
+    "generic-llm-agent"
+  ],
+  "agentInstructions": "docs/agents/AGENT_MANUAL.md",
+  "capabilities": {
+    "web3": {
+      "adapter": "src/adapters/web3.js",
+      "supportedActions": [
+        "web3.mint",
+        "web3.swap",
+        "web3.lp_snapshot",
+        "journal.record"
+      ]
+    },
+    "audit": {
+      "adapter": "src/agents/security-auditor.js",
+      "supportedActions": [
+        "audit.scan",
+        "dev.generate_plan"
+      ]
+    },
+    "workspaceState": {
+      "store": "src/core/store.js",
+      "keys": [
+        "paper_research_table",
+        "paper_projects",
+        "paper_notes",
+        "paper_theme",
+        "paper_ascii_bg"
+      ]
+    }
+  },
+  "runtimeCommands": {
+    "start": "node server.js",
+    "healthCheck": "node -e \"const http=require('http');http.get('http://localhost:8080',(r)=>{console.log(r.statusCode);process.exit(0);});\""
+  }
+}

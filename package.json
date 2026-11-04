@@ -1,0 +1,21 @@
+{
+  "name": "paper-local-dashboard",
+  "version": "1.0.0",
+  "description": "A flat retro card-based local workspace dashboard inspired by papertrade.xyz",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test:health": "node -e \"const http = require('http'); http.get('http://localhost:8080', (res) => { console.log('STATUS:', res.statusCode); process.exit(res.statusCode === 200 ? 0 : 1); });\""
+  },
+  "keywords": [
+    "dashboard",
+    "local",
+    "retro",
+    "papertrade",
+    "cards",
+    "productivity"
+  ],
+  "author": "",
+  "license": "MIT"
+}
