@@ -118,19 +118,19 @@ export function applyTheme(theme) {
   const icon = document.getElementById('themeIcon');
   const mobileIcon = document.getElementById('mobileThemeIcon');
   
-  // High-performance, lightweight PNG badges (7KB / 8KB)
-  const btcImg = '<img src="assets/btc-logo.png" alt="BTC" class="w-4 h-4 object-contain inline-block" />';
-  const ethImg = '<img src="assets/eth-logo.png" alt="ETH" class="w-4 h-4 object-contain inline-block" />';
+  // Ultra-lightweight, razor-sharp SVGs (<1KB)
+  const btcSvg = '<img src="assets/btc-logo.svg" alt="BTC" class="w-4 h-4 inline-block" />';
+  const ethSvg = '<img src="assets/eth-logo.svg" alt="ETH" class="w-4 h-4 inline-block" />';
 
   if (theme === 'dark') {
-    // In Dark mode -> Ethereum logo
-    if (icon) icon.innerHTML = ethImg;
-    if (mobileIcon) mobileIcon.innerHTML = ethImg;
+    // In Dark mode -> Ethereum SVG
+    if (icon) icon.innerHTML = ethSvg;
+    if (mobileIcon) mobileIcon.innerHTML = ethSvg;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0d1229');
   } else {
-    // In Light mode -> Bitcoin logo
-    if (icon) icon.innerHTML = btcImg;
-    if (mobileIcon) mobileIcon.innerHTML = btcImg;
+    // In Light mode -> Bitcoin SVG
+    if (icon) icon.innerHTML = btcSvg;
+    if (mobileIcon) mobileIcon.innerHTML = btcSvg;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ede5d0');
   }
 }
