@@ -8,6 +8,7 @@
  */
 import { BaseAgent } from './agent-interface.js';
 import { store } from '../core/store.js';
+import { runAudit, buildFixes, buildReport } from './audit-engine.js';
 
 export class SecurityAuditorAgent extends BaseAgent {
   constructor() {
@@ -15,7 +16,7 @@ export class SecurityAuditorAgent extends BaseAgent {
       id: 'agent.security_auditor',
       name: 'Security Auditor & Dev Planner',
       role: 'Performs static contract analysis, checks access controls, and generates dev roadmaps',
-      capabilities: ['audit.scan', 'dev.generate_plan']
+      capabilities: ['audit.scan', 'audit.fix', 'audit.report', 'dev.generate_plan']
     });
   }
 
@@ -28,6 +29,20 @@ export class SecurityAuditorAgent extends BaseAgent {
     });
 
     this.registry.registerAction({
+      id: 'audit.fix',
+      name: 'Propose Fixes for Audit Findings',
+      category: 'audit',
+      handler: async (ctx) => this.fixAudit(ctx)
+    });
+
+    this.registry.registerAction({
+      id: 'audit.report',
+      name: 'Generate Audit Report (Markdown)',
+      category: 'audit',
+      handler: async (ctx) => this.reportAudit(ctx)
+    });
+
+    this.registry.registerAction({
       id: 'dev.generate_plan',
       name: 'Generate Development Blueprint',
       category: 'dev',
@@ -35,25 +50,43 @@ export class SecurityAuditorAgent extends BaseAgent {
     });
   }
 
-  async runSecurityAudit({ targetUrl, contractCode, projectId }) {
-    let code = contractCode || '';
-    if (!code && projectId) {
+  resolveCode({ contractCode, projectId }) {
+    if (contractCode) return String(contractCode);
+    if (projectId) {
       const proj = (store.get('projects') || []).find((p) => p.id === projectId);
-      code = proj ? (proj.detail || '') : '';
+      return proj ? (proj.detail || '') : '';
     }
-    const src = String(code);
-    const has = (re) => re.test(src);
-    const findings = [
-      { check: 'Pragma version lock', status: has(/pragma\s+solidity\s+0\.\d+\.\d+/) ? 'PASS: locked pragma found' : 'RECOMMEND: lock solidity version (e.g. pragma solidity 0.8.24;)', severity: 'LOW' },
-      { check: 'ReentrancyGuard', status: has(/ReentrancyGuard|nonReentrant/) ? 'PASS: guard present' : 'REVIEW: no ReentrancyGuard/nonReentrant found in supplied text', severity: 'MEDIUM' },
-      { check: 'tx.origin usage', status: has(/tx\.origin/) ? 'FLAG: tx.origin present — phishable auth, prefer msg.sender' : 'PASS: no tx.origin', severity: 'HIGH' },
-      { check: 'delegatecall', status: has(/delegatecall/) ? 'REVIEW: delegatecall present — verify implementation slot safety' : 'PASS: no delegatecall', severity: 'MEDIUM' },
-      { check: 'Oracle freshness', status: has(/updatedAt|stale|freshness|median|heartbeat/i) ? 'PASS: freshness/median logic mentioned' : 'INFO: no oracle freshness logic found in supplied text', severity: 'INFO' },
-      { check: 'Access control', status: has(/Ownable|onlyOwner|AccessControl|onlyRole/) ? 'PASS: ownership/role gate present' : 'REVIEW: no Ownable/AccessControl found in supplied text', severity: 'MEDIUM' },
-    ];
-    const flags = findings.filter((f) => /FLAG|REVIEW/.test(f.status)).length;
-    const score = Math.max(0, 100 - flags * 12);
-    return { timestamp: new Date().toISOString(), target: targetUrl || projectId || 'supplied text', score: `${score}/100`, findings, note: 'Lightweight text checks only — run Slither/Mythril for a real audit.' };
+    return '';
+  }
+
+  async runSecurityAudit({ targetUrl, contractCode, projectId }) {
+    const code = this.resolveCode({ contractCode, projectId });
+    return runAudit(code, targetUrl || projectId || 'supplied text');
+  }
+
+  async fixAudit({ contractCode, projectId, apply }) {
+    const code = this.resolveCode({ contractCode, projectId });
+    const audit = runAudit(code, projectId || 'supplied text');
+    const fixes = buildFixes(audit);
+    let applied = false;
+    if (apply && projectId) {
+      const projects = store.get('projects') || [];
+      const proj = projects.find((p) => p.id === projectId);
+      if (proj && fixes.length) {
+        const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+        proj.detail = (proj.detail || '') + `\n\n// AUDIT FIX PROPOSALS [${ts}] (score ${audit.score})\n` + fixes.map((f) => `// ${f.check} [${f.severity}]:\n${f.fix}`).join('\n\n');
+        store.set('projects', projects);
+        applied = true;
+      }
+    }
+    return { score: audit.score, count: fixes.length, fixes, applied };
+  }
+
+  async reportAudit({ targetUrl, contractCode, projectId }) {
+    const code = this.resolveCode({ contractCode, projectId });
+    const audit = runAudit(code, targetUrl || projectId || 'supplied text');
+    const report = buildReport(audit, buildFixes(audit));
+    return { score: audit.score, report, audit };
   }
 
   async generateDevPlan({ title, requirements }) {

@@ -11,6 +11,7 @@ export const KEYS = {
   PROJECTS: 'paper_projects',
   JOURNAL: 'paper_degen_journal',
   NOTES: 'paper_notes',
+  AUDIT_REPORT: 'paper_audit_report',
 };
 
 const DEFAULT_JOURNAL = [
@@ -137,6 +138,7 @@ class Store {
       activeProjectId: null,
       journal: loadJSON(KEYS.JOURNAL, DEFAULT_JOURNAL),
       note: localStorage.getItem(KEYS.NOTES) !== null ? localStorage.getItem(KEYS.NOTES) : DEFAULT_NOTE,
+      auditReport: loadJSON(KEYS.AUDIT_REPORT, null),
     };
     this._hydrating = true;
     this._syncTimer = null;
@@ -176,6 +178,7 @@ class Store {
         projects: this.state.projects,
         journal: this.state.journal,
         notes: this.state.note,
+        auditReport: this.state.auditReport || null,
       };
       fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snapshot) })
         .catch((e) => console.warn('[Store] server sync failed', e));
@@ -195,6 +198,7 @@ class Store {
       else if (key === 'projects') saveJSON(KEYS.PROJECTS, val);
       else if (key === 'journal') saveJSON(KEYS.JOURNAL, val);
       else if (key === 'note') localStorage.setItem(KEYS.NOTES, val);
+      else if (key === 'auditReport') saveJSON(KEYS.AUDIT_REPORT, val);
     }
     bus.emit(`store:changed:${key}`, val);
     bus.emit('store:changed', { key, value: val });

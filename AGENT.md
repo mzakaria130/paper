@@ -56,3 +56,18 @@ Always-on is opt-in only: localStorage paper_agent_mode='always', or
 Real vs stub: audit.scan (lightweight text checks), dev.generate_plan and
 journal.record are real. web3.mint/swap/lp_snapshot return {stub:true}
 until the Phase 6 wallet adapter lands — no fake tx hashes.
+
+[SECURITY_AUDIT]  (bottom running card)
+Shared engine: src/agents/audit-engine.js (pure, imported by both the
+browser agent and tools/paper-bridge.mjs — one source of truth).
+12 best-practice checks: pragma lock, reentrancy, tx.origin, delegatecall,
+oracle freshness, access control, unchecked calls, selfdestruct,
+on-chain randomness, front-running/approve race, function visibility,
+unbounded loops. Each finding carries severity + evidence + a fix snippet.
+Actions: audit.scan (checklist + score), audit.fix (proposals; opt-in
+apply appends them to the project detail), audit.report (Markdown report).
+Bottom card (SECURITY // AUDIT REPORT, after Buffer): pick a project or
+paste code, press RUN AUDIT — the checklist ticks live like the top ticker,
+then findings/fixes/report render with COPY + MD download. Last report
+persists in store key auditReport (paper_audit_report). Still lightweight
+text checks only — Slither/Mythril remain the real audit tools.

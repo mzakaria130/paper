@@ -27,6 +27,7 @@
  */
 import fs from 'node:fs';
 import readline from 'node:readline';
+import { runAudit, buildFixes, buildReport } from '../src/agents/audit-engine.js';
 
 const BASE = (process.env.PAPER_API || 'http://127.0.0.1:8080').replace(/\/$/, '');
 const slug = (s) => String(s || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 32) || 'item';
@@ -114,7 +115,7 @@ const Ops = {
     mode: 'lazy',
     agents: [
       { id: 'agent.web3_journaler', name: 'Web3 & Strategy Journaler', actions: ['web3.mint', 'web3.swap', 'web3.lp_snapshot', 'journal.record'], loaded: false },
-      { id: 'agent.security_auditor', name: 'Security Auditor & Dev Planner', actions: ['audit.scan', 'dev.generate_plan'], loaded: false },
+      { id: 'agent.security_auditor', name: 'Security Auditor & Dev Planner', actions: ['audit.scan', 'audit.fix', 'audit.report', 'dev.generate_plan'], loaded: false },
     ],
     note: 'Lazy: agents instantiate only when run_agent executes one of their actions. For always-on browser mode see PaperWorkspace.agents.setMode("always").',
   }),
@@ -143,18 +144,40 @@ const Ops = {
           const proj = s.projects.find((p) => p.id === project_id);
           code = proj ? (proj.detail || '') : '';
         }
-        const src = String(code);
-        const has = (re) => re.test(src);
-        const findings = [
-          { check: 'Pragma version lock', status: has(/pragma\s+solidity\s+0\.\d+\.\d+/) ? 'PASS: locked pragma found' : 'RECOMMEND: lock solidity version (e.g. pragma solidity 0.8.24;)', severity: 'LOW' },
-          { check: 'ReentrancyGuard', status: has(/ReentrancyGuard|nonReentrant/) ? 'PASS: guard present' : 'REVIEW: no ReentrancyGuard/nonReentrant found in supplied text', severity: 'MEDIUM' },
-          { check: 'tx.origin usage', status: has(/tx\.origin/) ? 'FLAG: tx.origin present — phishable auth, prefer msg.sender' : 'PASS: no tx.origin', severity: 'HIGH' },
-          { check: 'delegatecall', status: has(/delegatecall/) ? 'REVIEW: delegatecall present — verify implementation slot safety' : 'PASS: no delegatecall', severity: 'MEDIUM' },
-          { check: 'Oracle freshness', status: has(/updatedAt|stale|freshness|median|heartbeat/i) ? 'PASS: freshness/median logic mentioned' : 'INFO: no oracle freshness logic found in supplied text', severity: 'INFO' },
-          { check: 'Access control', status: has(/Ownable|onlyOwner|AccessControl|onlyRole/) ? 'PASS: ownership/role gate present' : 'REVIEW: no Ownable/AccessControl found in supplied text', severity: 'MEDIUM' },
-        ];
-        const flags = findings.filter((f) => /FLAG|REVIEW/.test(f.status)).length;
-        return { timestamp: new Date().toISOString(), target: target_url || project_id || 'supplied text', score: `${Math.max(0, 100 - flags * 12)}/100`, findings, note: 'Lightweight text checks only — run Slither/Mythril for a real audit.' };
+        return runAudit(code, target_url || project_id || 'supplied text');
+      }
+      case 'audit.fix': {
+        let code = contract_code || '';
+        if (!code && project_id) {
+          const s = ensureShape(await apiGet());
+          const proj = s.projects.find((p) => p.id === project_id);
+          code = proj ? (proj.detail || '') : '';
+        }
+        const audit = runAudit(code, project_id || 'supplied text');
+        const fixes = buildFixes(audit);
+        let applied = false;
+        const doApply = rest.apply === true || rest.apply === 'true';
+        if (doApply && project_id && fixes.length) {
+          const saved = await mutate((s) => {
+            const proj = s.projects.find((p) => p.id === project_id);
+            if (!proj) throw new Error(`project not found: ${project_id}`);
+            const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+            proj.detail = (proj.detail || '') + `\n\n// AUDIT FIX PROPOSALS [${ts}] (score ${audit.score})\n` + fixes.map((f) => `// ${f.check} [${f.severity}]:\n${f.fix}`).join('\n\n');
+            return { added: true, project: proj.name, id: proj.id };
+          });
+          applied = saved.result.added;
+        }
+        return { score: audit.score, count: fixes.length, fixes, applied };
+      }
+      case 'audit.report': {
+        let code = contract_code || '';
+        if (!code && project_id) {
+          const s = ensureShape(await apiGet());
+          const proj = s.projects.find((p) => p.id === project_id);
+          code = proj ? (proj.detail || '') : '';
+        }
+        const audit = runAudit(code, target_url || project_id || 'supplied text');
+        return { score: audit.score, report: buildReport(audit, buildFixes(audit)), audit };
       }
       case 'dev.generate_plan': {
         if (!title) throw new Error('dev.generate_plan requires title');

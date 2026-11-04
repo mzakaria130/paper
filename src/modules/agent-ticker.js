@@ -50,11 +50,11 @@ const DEFAULT_ACTIVE_ENTITIES = [
     icon: '🛡️',
     badge: 'IDLE',
     badgeType: 'accent',
-    sub: 'Static Analysis & Threat Modeling',
+    sub: 'Static Analysis & Threat Modeling (lazy)',
     stats: {
-      rules: 'Reentrancy, AccessControl, Invariant',
-      checksPassed: '48 / 48',
-      score: '98 / 100'
+      rules: '12 best-practice checks (pragma, reentrancy, tx.origin, ...)',
+      mode: 'Lazy — runs on RUN AUDIT press',
+      score: '— (run an audit)'
     }
   },
   {

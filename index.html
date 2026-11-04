@@ -299,6 +299,57 @@
         </div>
       </section>
 
+      <!-- ==================================================================
+           STACK 5 (BOTTOM): SECURITY // AUDIT REPORT (RUNNING CARD)
+           Mirrors the top ACTIVE AGENTS ticker card — live ticking
+           checklist + report. Lazy: nothing runs until RUN AUDIT.
+           ================================================================== -->
+      <section class="retro-card" id="securityCard">
+        <div class="retro-header">
+          <div class="flex items-center gap-2">
+            <span>SECURITY // AUDIT REPORT</span>
+            <span id="auditStatusBadge" class="retro-badge retro-badge-cyan text-[9px] py-0.5">IDLE</span>
+            <span class="retro-badge retro-badge-accent text-[9px] py-0.5">SCORE <span id="auditScore">—</span></span>
+          </div>
+          <div class="flex items-center gap-1 flex-wrap">
+            <select id="auditProjectSelect" class="retro-input cursor-pointer text-[10px] py-0.5 px-1.5 max-w-[180px]" title="Audit target project (or paste code below)"></select>
+            <button id="runAuditBtn" class="retro-btn retro-btn-primary text-[9px] py-0.5 px-2.5" title="Run best-practice audit (loads the security agent on demand)">
+              ▶ RUN AUDIT
+            </button>
+            <button id="showFixesBtn" class="retro-btn text-[9px] py-0.5 px-1.5" disabled title="Jump to fix proposals">FIXES</button>
+            <button id="copyReportBtn" class="retro-btn text-[9px] py-0.5 px-1.5" disabled title="Copy report markdown">COPY</button>
+            <button id="downloadReportBtn" class="retro-btn text-[9px] py-0.5 px-1.5" disabled title="Download report as .md">MD ↓</button>
+          </div>
+        </div>
+
+        <div class="p-3 md:p-4 space-y-3">
+          <p id="auditMeta" class="text-[9px] font-mono text-[var(--pt-ink-faint)]">LAZY AGENT — AUDIT RUNS ONLY WHEN YOU PRESS RUN. CHECKS: PRAGMA • REENTRANCY • TX.ORIGIN • DELEGATECALL • ORACLE • ACCESS • CALLS • SELFDESTRUCT • RANDOMNESS • FRONT-RUN • VISIBILITY • LOOPS</p>
+
+          <textarea id="auditCodeInput" class="w-full min-h-[90px] retro-input font-mono text-[11px] p-2.5 resize-y leading-relaxed" placeholder="Paste Solidity code here, or pick a project above to audit its detail text..." spellcheck="false"></textarea>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="border border-[var(--pt-border)] rounded-[var(--pt-radius-xs)] p-2.5 bg-[var(--pt-panel-sunken)]">
+              <p class="text-[10px] font-bold uppercase mb-1">✅ Best-practice checklist — live</p>
+              <div id="auditChecklist"></div>
+            </div>
+            <div class="border border-[var(--pt-border)] rounded-[var(--pt-radius-xs)] p-2.5 bg-[var(--pt-panel-sunken)]">
+              <p class="text-[10px] font-bold uppercase mb-1">⚠️ Potential vulnerabilities</p>
+              <div id="auditFindings"></div>
+            </div>
+          </div>
+
+          <div class="border border-[var(--pt-border)] rounded-[var(--pt-radius-xs)] p-2.5">
+            <p class="text-[10px] font-bold uppercase mb-2">🛠️ Fix proposals</p>
+            <div id="auditFixes"><p class="text-[11px] text-[var(--pt-ink-muted)]">Run an audit to generate fixes.</p></div>
+          </div>
+
+          <div class="border border-[var(--pt-border)] rounded-[var(--pt-radius-xs)] p-2.5 bg-[var(--pt-panel-sunken)]">
+            <p class="text-[10px] font-bold uppercase mb-1">📄 Report (Markdown)</p>
+            <pre id="auditReportPre" class="text-[10px] leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto">No report yet — press RUN AUDIT.</pre>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <!-- Hidden file input for JSON restore -->

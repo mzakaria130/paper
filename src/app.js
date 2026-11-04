@@ -16,6 +16,7 @@ import { initJournalTable } from './modules/journal.js';
 import { initScratchpad } from './modules/buffer.js';
 import { initTelemetry, applyTheme } from './modules/telemetry.js';
 import { initVisualArch } from './modules/visual-arch.js';
+import { initSecurityCard } from './modules/security.js';
 
 import { Web3JournalerAgent } from './agents/web3-journaler.js';
 import { SecurityAuditorAgent } from './agents/security-auditor.js';
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Modals, Storage Telemetry, & Visual Architecture Map
   initTelemetry();
   initVisualArch();
+  initSecurityCard();
   initMobileMenu();
   initModals();
   initKeyboardShortcuts();
@@ -146,7 +148,7 @@ function initAgents() {
 
   const defs = [
     { id: 'agent.web3_journaler', create: () => new Web3JournalerAgent(), actions: ['web3.mint', 'web3.swap', 'web3.lp_snapshot', 'journal.record'], events: ['research:promoted'] },
-    { id: 'agent.security_auditor', create: () => new SecurityAuditorAgent(), actions: ['audit.scan', 'dev.generate_plan'], events: [] },
+    { id: 'agent.security_auditor', create: () => new SecurityAuditorAgent(), actions: ['audit.scan', 'audit.fix', 'audit.report', 'dev.generate_plan'], events: [] },
   ];
 
   for (const def of defs) {
