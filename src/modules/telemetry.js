@@ -117,15 +117,20 @@ export function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   const icon = document.getElementById('themeIcon');
   const mobileIcon = document.getElementById('mobileThemeIcon');
+  
+  // High-performance, lightweight PNG badges (7KB / 8KB)
+  const btcImg = '<img src="assets/btc-logo.png" alt="BTC" class="w-4 h-4 object-contain inline-block" />';
+  const ethImg = '<img src="assets/eth-logo.png" alt="ETH" class="w-4 h-4 object-contain inline-block" />';
+
   if (theme === 'dark') {
-    // In Dark mode -> Ethereum logo (⧫)
-    if (icon) icon.textContent = '⧫';
-    if (mobileIcon) mobileIcon.textContent = '⧫';
+    // In Dark mode -> Ethereum logo
+    if (icon) icon.innerHTML = ethImg;
+    if (mobileIcon) mobileIcon.innerHTML = ethImg;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0d1229');
   } else {
-    // In Light mode -> Bitcoin logo (₿)
-    if (icon) icon.textContent = '₿';
-    if (mobileIcon) mobileIcon.textContent = '₿';
+    // In Light mode -> Bitcoin logo
+    if (icon) icon.innerHTML = btcImg;
+    if (mobileIcon) mobileIcon.innerHTML = btcImg;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ede5d0');
   }
 }
